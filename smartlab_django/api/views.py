@@ -89,7 +89,6 @@ class OptionSetView(APIView):
 
         ser = serial.Serial(PORTX, BPS, timeout=TIMEX)
         send_str = f"{ac_status},{led1_status},{led2_status},{led3_status},{light_intensity},{temperature}\r\n"
-        # print(send_str.strip())
         try:
             ser.write(send_str.encode("utf-8"))
         except Exception as e:
@@ -108,6 +107,12 @@ class OptionSetView(APIView):
         except Exception as e:
             print(e)
             return Response({"status": "error", "msg": "MySQL写日志失败"})
+        try:
+            latest_ids_to_keep = DataLog.objects.order_by("-create_time").values_list('id', flat=True)[:30]
+            DataLog.objects.exclude(id__in=latest_ids_to_keep).delete()
+        except Exception as e:
+            print(e)
+            return Response({"status": "error", "msg": "MySQL清除冗余日志失败"})
         return Response({"status": "ok"})
 
 
@@ -127,6 +132,13 @@ class EChartsView(APIView):
         temperature_list = query_set.values_list('temperature', flat=True)
         humidity_list = query_set.values_list('humidity', flat=True)
         temperature_option = {
+            'grid': {
+                'left': '1%',
+                'right': '1%',
+                'top': '5%',
+                'bottom': '5%',
+                'containLabel': 'true',
+            },
             'xAxis': {
                 'type': 'category',
                 'data': id_list
@@ -143,6 +155,13 @@ class EChartsView(APIView):
             ]
         }
         humidity_option = {
+            'grid': {
+                'left': '1%',
+                'right': '1%',
+                'top': '5%',
+                'bottom': '5%',
+                'containLabel': 'true',
+            },
             'xAxis': {
                 'type': 'category',
                 'data': id_list

@@ -42,7 +42,10 @@
             </div>
             <div class="panel-body">
                 <button name="power" type="button" class="btn btn-success" onclick="changeBtn06Text()">系统状态: <span
-                        class="power">开启</span></button>
+                        class="power">关闭</span></button>
+                <button name="accelerate" type="button" class="btn btn-success" onclick="changeBtn07Text()">刷新率:
+                    <span class="accelerate">1.0</span>it/s
+                </button>
                 <button name="led1" type="button" class="btn btn-primary" onclick="changeBtn01Text()">LED_1: <span
                         class="led01">关</span></button>
                 <button name="led2" type="button" class="btn btn-primary" onclick="changeBtn02Text()">LED_2: <span
@@ -113,6 +116,7 @@
     let ac_status = 0;
     let system_status = 0;
     let system_run_time = 0;
+    let refresh_interval = 1000;
 
     let temperatureChart = echarts.init(document.getElementById('temperature'));
     let humidityChart = echarts.init(document.getElementById('humidity'));
@@ -202,11 +206,24 @@
         $(".power").each(function () {
             if (system_status === 1) {
                 system_status = 0;
-                $(this).text("开启");
+                $(this).text("关闭");
                 $(".system_runtime").text("PAUSE");
             } else {
                 system_status = 1;
-                $(this).text("关闭");
+                $(this).text("开启");
+            }
+        })
+        setDevice();
+    }
+
+    function changeBtn07Text() {
+        $(".accelerate").each(function () {
+            if (refresh_interval === 1000) {
+                refresh_interval = 500;
+                $(this).text("2.0");
+            } else {
+                refresh_interval = 1000;
+                $(this).text("1.0");
             }
         })
         setDevice();
@@ -285,14 +302,26 @@
         });
     }
 
-    setInterval(function () {
+    const intervalId = setInterval(() => {
         if (system_status) {
             addSystemRuntime();
             updateEChart();
             showLog();
             setDevice();
         }
-    }, 1000)
+    }, refresh_interval);
+
+    function changeInterval() {
+        clearInterval(intervalId);
+        setInterval(() => {
+            if (system_status) {
+                addSystemRuntime();
+                updateEChart();
+                showLog();
+                setDevice();
+            }
+        }, refresh_interval);
+    }
 </script>
 </body>
 </html>
