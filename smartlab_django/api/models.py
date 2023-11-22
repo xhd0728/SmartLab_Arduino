@@ -13,5 +13,4 @@ class DataLog(models.Model):
     led_3_status = models.BooleanField(verbose_name="LED_3", default=False)
     ac_status = models.BooleanField(verbose_name="AC", default=False)
     led_num = models.PositiveIntegerField(verbose_name="LED开启数量")
-    air_conditioner_status = models.BooleanField(verbose_name="空调状态", default=False)
     create_time = models.DateTimeField(verbose_name="记录时间", default=timezone.now)

@@ -42,13 +42,11 @@
             </div>
             <div class="panel-body">
                 <button name="led1" type="button" class="btn btn-primary" onclick="changeBtn01Text()">LED_1: <span
-                        class="led01">开</span></button>
+                        class="led01">关</span></button>
                 <button name="led2" type="button" class="btn btn-primary" onclick="changeBtn02Text()">LED_2: <span
                         class="led02">关</span></button>
                 <button name="led3" type="button" class="btn btn-primary" onclick="changeBtn03Text()">LED_3: <span
-                        class="led03">开</span></button>
-                <button name="led4" type="button" class="btn btn-primary" onclick="changeBtn04Text()">LED_4: <span
-                        class="led04">关</span></button>
+                        class="led03">关</span></button>
                 <button name="ac" type="button" class="btn btn-warning" onclick="changeBtn05Text()">AC: <span
                         class="ac">关</span></button>
             </div>
@@ -57,42 +55,12 @@
             <div class="panel-heading">
                 <h3 class="panel-title">操作日志</h3>
             </div>
-            <div class="panel-body">
+            <div id="log-table" class="panel-body">
                 <!-- Table -->
-                <table class="table" style="margin: auto">
+                <table id="log" class="table" style="margin: auto">
                     <thead>
-                    <tr>
-                        <th>时间</th>
-                        <th>LED_1</th>
-                        <th>LED_2</th>
-                        <th>LED_3</th>
-                        <th>LED_4</th>
-                        <th>AC</th>
-                        <th>温度</th>
-                        <th>湿度</th>
-                    </tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <td>2023-10-11 14:25</td>
-                        <td>开</td>
-                        <td>关</td>
-                        <td>开</td>
-                        <td>关</td>
-                        <td>关</td>
-                        <td>23.3℃</td>
-                        <td>23.3%</td>
-                    </tr>
-                    <tr>
-                        <td>2023-10-11 14:26</td>
-                        <td>开</td>
-                        <td>关</td>
-                        <td>开</td>
-                        <td>关</td>
-                        <td>关</td>
-                        <td>23.3℃</td>
-                        <td>23.3%</td>
-                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -107,8 +75,8 @@
             <div class="panel-body">
                 <div style="display: flex;justify-content: space-evenly">
                     <div>LED开启数量：{{ 2 }}</div>
-                    <div>室内温度：{{ 23.3 }}℃</div>
-                    <div>室内湿度：{{ 23.3 }}%</div>
+                    <div>室内温度：{{ 23.3 }} ℃</div>
+                    <div>室内光强：{{ 23.3 }} Lux</div>
                 </div>
                 <div style="display: flex;justify-content: space-evenly">
                     <div>开发板：Arduino Uno</div>
@@ -119,7 +87,7 @@
         </div>
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">温度监测</h3>
+                <h3 class="panel-title">温度监测（单位：℃）</h3>
             </div>
             <div class="panel-body">
                 <div id="temperature" style="width: 100%;height:200px;"></div>
@@ -127,7 +95,7 @@
         </div>
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">湿度监测</h3>
+                <h3 class="panel-title">光强监测（单位：Lux）</h3>
             </div>
             <div class="panel-body">
                 <div id="humidity" style="width: 100%;height:200px;"></div>
@@ -136,54 +104,33 @@
     </div>
 </div>
 <script type="text/javascript">
-    let led1_status = 1;
+    let led1_status = 0;
     let led2_status = 0;
-    let led3_status = 1;
-    let led4_status = 0;
+    let led3_status = 0;
     let ac_status = 0;
     let system_run_time = 0;
 
     let temperatureChart = echarts.init(document.getElementById('temperature'));
     let humidityChart = echarts.init(document.getElementById('humidity'));
-    let temperatureOption = {
-        xAxis: {
-            type: 'category',
-            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        },
-        yAxis: {
-            type: 'value'
-        },
-        series: [
-            {
+    let temperatureOption;
+    let humidityOption;
 
-                data: [150, 230, 224, 218, 135, 147, 260],
-                type: 'line'
+    function updateEChart() {
+        $.ajax({
+            url: "/api/echarts",
+            type: "GET",
+            dataType: "JSON",
+            success: function (res) {
+                if (res.status === 'ok') {
+                    temperatureOption = res.temperature;
+                    humidityOption = res.humidity;
+                    temperatureChart.setOption(temperatureOption);
+                    humidityChart.setOption(humidityOption);
+                } else {
+                    alert(res.msg);
+                }
             }
-        ]
-    };
-    let humidityOption = {
-        xAxis: {
-            type: 'category',
-            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        },
-        yAxis: {
-            type: 'value'
-        },
-        series: [
-            {
-
-                data: [150, 230, 224, 218, 135, 147, 260],
-                type: 'line'
-            }
-        ]
-    };
-
-    function updateTemperatureChart() {
-        temperatureChart.setOption(temperatureOption);
-    }
-
-    function updateHumidityChart() {
-        humidityChart.setOption(humidityOption);
+        })
     }
 
     function changeBtn01Text() {
@@ -225,19 +172,6 @@
         setDevice();
     }
 
-    function changeBtn04Text() {
-        $(".led04").each(function () {
-            if (led4_status === 1) {
-                led4_status = 0
-                $(this).text("关")
-            } else {
-                led4_status = 1
-                $(this).text("开")
-            }
-        })
-        setDevice();
-    }
-
     function changeBtn05Text() {
         $(".ac").each(function () {
             if (ac_status === 1) {
@@ -259,15 +193,14 @@
                 ac_status: ac_status,
                 led1_status: led1_status,
                 led2_status: led2_status,
-                led3_status: led3_status,
-                led4_status: led4_status,
+                led3_status: led3_status
             },
             dataType: "JSON",
             success: function (res) {
-                if (res.status) {
-                    console.log("数据发送成功");
+                if (res.status === 'ok') {
+                    console.log("transfer success");
                 } else {
-                    alert("与Arduino通信失败");
+                    alert(res.msg);
                 }
             }
         })
@@ -280,10 +213,56 @@
         })
     }
 
+    function showLog() {
+        $(document).ready(function () {
+            $.ajax({
+                url: "/api/history",
+                method: "GET",
+                dataType: "JSON",
+                success: function (data) {
+                    // 清空表格
+                    $("#log thead").empty();
+                    $("#log tbody").empty();
+
+                    var head = "<tr>" +
+                        "<th>ID</th>" +
+                        "<th>时间</th>" +
+                        "<th>LED_1</th>" +
+                        "<th>LED_2</th>" +
+                        "<th>LED_3</th>" +
+                        "<th>AC</th>" +
+                        "<th>温度</th>" +
+                        "<th>光强</th>" +
+                        "</tr>";
+
+                    $("#log").append(head);
+
+                    // 遍历每个日志对象
+                    data.forEach(function (log) {
+                        // 创建表格行并追加到表格中
+                        var row = "<tr>" +
+                            "<td>" + log.lid + "</td>" +
+                            "<td>" + log.create_time + "</td>" +
+                            "<td>" + (log.led_1_status ? '开' : '关') + "</td>" +
+                            "<td>" + (log.led_2_status ? '开' : '关') + "</td>" +
+                            "<td>" + (log.led_3_status ? '开' : '关') + "</td>" +
+                            "<td>" + (log.ac_status ? '开' : '关') + "</td>" +
+                            "<td>" + log.temperature + " ℃</td>" +
+                            "<td>" + log.humidity + " Lux</td>" +
+                            "</tr>";
+
+                        $("#log").append(row);
+                    });
+                }
+            });
+        });
+    }
+
     setInterval(function () {
         addSystemRuntime();
-        updateTemperatureChart();
-        updateHumidityChart();
+        updateEChart();
+        showLog();
+        setDevice();
     }, 1000)
 </script>
 </body>

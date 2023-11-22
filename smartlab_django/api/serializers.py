@@ -20,6 +20,5 @@ class DataLogSerializer(serializers.ModelSerializer):
             'led_3_status',
             'ac_status',
             'led_num',
-            'air_conditioner_status',
             'create_time'
         )
