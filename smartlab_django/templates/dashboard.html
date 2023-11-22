@@ -41,6 +41,8 @@
                 <h3 class="panel-title">控制面板</h3>
             </div>
             <div class="panel-body">
+                <button name="power" type="button" class="btn btn-success" onclick="changeBtn06Text()">系统状态: <span
+                        class="power">开启</span></button>
                 <button name="led1" type="button" class="btn btn-primary" onclick="changeBtn01Text()">LED_1: <span
                         class="led01">关</span></button>
                 <button name="led2" type="button" class="btn btn-primary" onclick="changeBtn02Text()">LED_2: <span
@@ -74,14 +76,14 @@
             </div>
             <div class="panel-body">
                 <div style="display: flex;justify-content: space-evenly">
-                    <div>LED开启数量：{{ 2 }}</div>
-                    <div>室内温度：{{ 23.3 }} ℃</div>
-                    <div>室内光强：{{ 23.3 }} Lux</div>
+                    <div class="led_num">LED开启数量：NaN</div>
+                    <div class="temperature_now">室内温度：NaN ℃</div>
+                    <div class="humidity_now">室内光强：NaN Lux</div>
                 </div>
                 <div style="display: flex;justify-content: space-evenly">
                     <div>开发板：Arduino Uno</div>
                     <div>COM2: USB-SERIAL</div>
-                    <div>系统运行时间：<span class="system_runtime">0秒</span></div>
+                    <div>系统运行时间：<span class="system_runtime">STOP</span></div>
                 </div>
             </div>
         </div>
@@ -107,7 +109,9 @@
     let led1_status = 0;
     let led2_status = 0;
     let led3_status = 0;
+    let led_num = 0;
     let ac_status = 0;
+    let system_status = 0;
     let system_run_time = 0;
 
     let temperatureChart = echarts.init(document.getElementById('temperature'));
@@ -126,6 +130,9 @@
                     humidityOption = res.humidity;
                     temperatureChart.setOption(temperatureOption);
                     humidityChart.setOption(humidityOption);
+                    $(".led_num").text("LED开启数量：" + led_num);
+                    $(".temperature_now").text("室内温度：" + res.temperature_now + "℃");
+                    $(".humidity_now").text("室内光强：" + res.humidity_now + " Lux");
                 } else {
                     alert(res.msg);
                 }
@@ -136,11 +143,13 @@
     function changeBtn01Text() {
         $(".led01").each(function () {
             if (led1_status === 1) {
-                led1_status = 0
-                $(this).text("关")
+                led1_status = 0;
+                $(this).text("关");
+                led_num--;
             } else {
-                led1_status = 1
-                $(this).text("开")
+                led1_status = 1;
+                $(this).text("开");
+                led_num++;
             }
         })
         setDevice();
@@ -149,11 +158,13 @@
     function changeBtn02Text() {
         $(".led02").each(function () {
             if (led2_status === 1) {
-                led2_status = 0
-                $(this).text("关")
+                led2_status = 0;
+                led_num--;
+                $(this).text("关");
             } else {
-                led2_status = 1
-                $(this).text("开")
+                led2_status = 1;
+                led_num++;
+                $(this).text("开");
             }
         })
         setDevice();
@@ -162,11 +173,13 @@
     function changeBtn03Text() {
         $(".led03").each(function () {
             if (led3_status === 1) {
-                led3_status = 0
-                $(this).text("关")
+                led3_status = 0;
+                $(this).text("关");
+                led_num--;
             } else {
-                led3_status = 1
-                $(this).text("开")
+                led3_status = 1;
+                $(this).text("开");
+                led_num++;
             }
         })
         setDevice();
@@ -175,11 +188,25 @@
     function changeBtn05Text() {
         $(".ac").each(function () {
             if (ac_status === 1) {
-                ac_status = 0
-                $(this).text("关")
+                ac_status = 0;
+                $(this).text("关");
             } else {
-                ac_status = 1
-                $(this).text("开")
+                ac_status = 1;
+                $(this).text("开");
+            }
+        })
+        setDevice();
+    }
+
+    function changeBtn06Text() {
+        $(".power").each(function () {
+            if (system_status === 1) {
+                system_status = 0;
+                $(this).text("开启");
+                $(".system_runtime").text("PAUSE");
+            } else {
+                system_status = 1;
+                $(this).text("关闭");
             }
         })
         setDevice();
@@ -259,10 +286,12 @@
     }
 
     setInterval(function () {
-        addSystemRuntime();
-        updateEChart();
-        showLog();
-        setDevice();
+        if (system_status) {
+            addSystemRuntime();
+            updateEChart();
+            showLog();
+            setDevice();
+        }
     }, 1000)
 </script>
 </body>

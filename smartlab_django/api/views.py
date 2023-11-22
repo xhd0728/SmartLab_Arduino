@@ -158,4 +158,10 @@ class EChartsView(APIView):
                 }
             ]
         }
-        return Response({"status": "ok", "temperature": temperature_option, "humidity": humidity_option})
+        return Response({
+            "status": "ok",
+            "temperature": temperature_option,
+            "humidity": humidity_option,
+            "temperature_now": temperature_list[0],
+            "humidity_now": humidity_list[0]
+        })
