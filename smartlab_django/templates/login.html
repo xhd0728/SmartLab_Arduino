@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智慧实验室监测系统</title>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1/css/bootstrap.css' %}">
+    <script src="{% static 'js/jquery-3.7.1.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-3.4.1/js/bootstrap.js' %}"></script>
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+            </button>
+            <a class="navbar-brand" href="/login">智慧实验室监测系统</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+<div style="display: flex;justify-content: center">
+    <div class="panel panel-default" style="width: 30%;text-align: center">
+        <div class="panel-heading">
+            <h3 class="panel-title">管理员登录</h3>
+        </div>
+        <div class="panel-body" style="display: flex;justify-content: center">
+            <form action="/login" method="post">
+                <input name="username" type="text" class="form-control" placeholder="请输入用户名"
+                       aria-describedby="basic-addon1">
+                <div style="margin-bottom: 10px"></div>
+                <input name="password" type="password" class="form-control" placeholder="请输入密码"
+                       aria-describedby="basic-addon1">
+                <div style="margin-bottom: 10px"></div>
+                <div style="display: flex;justify-content: center">
+                    <button type="submit" class="btn btn-primary" style="width: 100%">登录</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

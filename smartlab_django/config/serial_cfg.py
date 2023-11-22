@@ -1,0 +1,3 @@
+PORTX = "COM1"
+BPS = 9600
+TIMEX = None

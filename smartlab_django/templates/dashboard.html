@@ -1,0 +1,290 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智慧实验室监测系统</title>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1/css/bootstrap.css' %}">
+    <script src="{% static 'js/jquery-3.7.1.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-3.4.1/js/bootstrap.js' %}"></script>
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+    <style>
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle !important;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+            </button>
+            <a class="navbar-brand" href="/dashboard">智慧实验室监测系统</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+<div style="display: flex;justify-content: space-around;text-align: center">
+    <!-- left panel -->
+    <div style="width: 45%">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">控制面板</h3>
+            </div>
+            <div class="panel-body">
+                <button name="led1" type="button" class="btn btn-primary" onclick="changeBtn01Text()">LED_1: <span
+                        class="led01">开</span></button>
+                <button name="led2" type="button" class="btn btn-primary" onclick="changeBtn02Text()">LED_2: <span
+                        class="led02">关</span></button>
+                <button name="led3" type="button" class="btn btn-primary" onclick="changeBtn03Text()">LED_3: <span
+                        class="led03">开</span></button>
+                <button name="led4" type="button" class="btn btn-primary" onclick="changeBtn04Text()">LED_4: <span
+                        class="led04">关</span></button>
+                <button name="ac" type="button" class="btn btn-warning" onclick="changeBtn05Text()">AC: <span
+                        class="ac">关</span></button>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">操作日志</h3>
+            </div>
+            <div class="panel-body">
+                <!-- Table -->
+                <table class="table" style="margin: auto">
+                    <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>LED_1</th>
+                        <th>LED_2</th>
+                        <th>LED_3</th>
+                        <th>LED_4</th>
+                        <th>AC</th>
+                        <th>温度</th>
+                        <th>湿度</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>2023-10-11 14:25</td>
+                        <td>开</td>
+                        <td>关</td>
+                        <td>开</td>
+                        <td>关</td>
+                        <td>关</td>
+                        <td>23.3℃</td>
+                        <td>23.3%</td>
+                    </tr>
+                    <tr>
+                        <td>2023-10-11 14:26</td>
+                        <td>开</td>
+                        <td>关</td>
+                        <td>开</td>
+                        <td>关</td>
+                        <td>关</td>
+                        <td>23.3℃</td>
+                        <td>23.3%</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- right panel-->
+    <div style="width: 45%">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">仪表盘</h3>
+            </div>
+            <div class="panel-body">
+                <div style="display: flex;justify-content: space-evenly">
+                    <div>LED开启数量：{{ 2 }}</div>
+                    <div>室内温度：{{ 23.3 }}℃</div>
+                    <div>室内湿度：{{ 23.3 }}%</div>
+                </div>
+                <div style="display: flex;justify-content: space-evenly">
+                    <div>开发板：Arduino Uno</div>
+                    <div>COM2: USB-SERIAL</div>
+                    <div>系统运行时间：<span class="system_runtime">0秒</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">温度监测</h3>
+            </div>
+            <div class="panel-body">
+                <div id="temperature" style="width: 100%;height:200px;"></div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">湿度监测</h3>
+            </div>
+            <div class="panel-body">
+                <div id="humidity" style="width: 100%;height:200px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    let led1_status = 1;
+    let led2_status = 0;
+    let led3_status = 1;
+    let led4_status = 0;
+    let ac_status = 0;
+    let system_run_time = 0;
+
+    let temperatureChart = echarts.init(document.getElementById('temperature'));
+    let humidityChart = echarts.init(document.getElementById('humidity'));
+    let temperatureOption = {
+        xAxis: {
+            type: 'category',
+            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: [
+            {
+
+                data: [150, 230, 224, 218, 135, 147, 260],
+                type: 'line'
+            }
+        ]
+    };
+    let humidityOption = {
+        xAxis: {
+            type: 'category',
+            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: [
+            {
+
+                data: [150, 230, 224, 218, 135, 147, 260],
+                type: 'line'
+            }
+        ]
+    };
+
+    function updateTemperatureChart() {
+        temperatureChart.setOption(temperatureOption);
+    }
+
+    function updateHumidityChart() {
+        humidityChart.setOption(humidityOption);
+    }
+
+    function changeBtn01Text() {
+        $(".led01").each(function () {
+            if (led1_status === 1) {
+                led1_status = 0
+                $(this).text("关")
+            } else {
+                led1_status = 1
+                $(this).text("开")
+            }
+        })
+        setDevice();
+    }
+
+    function changeBtn02Text() {
+        $(".led02").each(function () {
+            if (led2_status === 1) {
+                led2_status = 0
+                $(this).text("关")
+            } else {
+                led2_status = 1
+                $(this).text("开")
+            }
+        })
+        setDevice();
+    }
+
+    function changeBtn03Text() {
+        $(".led03").each(function () {
+            if (led3_status === 1) {
+                led3_status = 0
+                $(this).text("关")
+            } else {
+                led3_status = 1
+                $(this).text("开")
+            }
+        })
+        setDevice();
+    }
+
+    function changeBtn04Text() {
+        $(".led04").each(function () {
+            if (led4_status === 1) {
+                led4_status = 0
+                $(this).text("关")
+            } else {
+                led4_status = 1
+                $(this).text("开")
+            }
+        })
+        setDevice();
+    }
+
+    function changeBtn05Text() {
+        $(".ac").each(function () {
+            if (ac_status === 1) {
+                ac_status = 0
+                $(this).text("关")
+            } else {
+                ac_status = 1
+                $(this).text("开")
+            }
+        })
+        setDevice();
+    }
+
+    function setDevice() {
+        $.ajax({
+            url: "/api/set",
+            type: "post",
+            data: {
+                ac_status: ac_status,
+                led1_status: led1_status,
+                led2_status: led2_status,
+                led3_status: led3_status,
+                led4_status: led4_status,
+            },
+            dataType: "JSON",
+            success: function (res) {
+                if (res.status) {
+                    console.log("数据发送成功");
+                } else {
+                    alert("与Arduino通信失败");
+                }
+            }
+        })
+    }
+
+    function addSystemRuntime() {
+        $(".system_runtime").each(function () {
+            $(this).text(system_run_time + "秒")
+            system_run_time++;
+        })
+    }
+
+    setInterval(function () {
+        addSystemRuntime();
+        updateTemperatureChart();
+        updateHumidityChart();
+    }, 1000)
+</script>
+</body>
+</html>
