@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 import serial
 from config.serial_cfg import *
+from config.echarts import gen_echarts_option
 from pkg.data_process import led_num2light_intensity, ac_num2temperature
 from .models import DataLog
 from .serializers import DataLogSerializer
@@ -131,52 +132,8 @@ class EChartsView(APIView):
         id_list = query_set.values_list('id', flat=True)
         temperature_list = query_set.values_list('temperature', flat=True)
         humidity_list = query_set.values_list('humidity', flat=True)
-        temperature_option = {
-            'grid': {
-                'left': '1%',
-                'right': '1%',
-                'top': '5%',
-                'bottom': '5%',
-                'containLabel': 'true',
-            },
-            'xAxis': {
-                'type': 'category',
-                'data': id_list
-            },
-            'yAxis': {
-                'type': 'value'
-            },
-            'series': [
-                {
-
-                    'data': temperature_list,
-                    'type': 'line'
-                }
-            ]
-        }
-        humidity_option = {
-            'grid': {
-                'left': '1%',
-                'right': '1%',
-                'top': '5%',
-                'bottom': '5%',
-                'containLabel': 'true',
-            },
-            'xAxis': {
-                'type': 'category',
-                'data': id_list
-            },
-            'yAxis': {
-                'type': 'value'
-            },
-            'series': [
-                {
-
-                    'data': humidity_list,
-                    'type': 'line'
-                }
-            ]
-        }
+        temperature_option = gen_echarts_option(id_list, temperature_list)
+        humidity_option = gen_echarts_option(id_list, humidity_list)
         return Response({
             "status": "ok",
             "temperature": temperature_option,
