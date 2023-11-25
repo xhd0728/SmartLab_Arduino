@@ -90,13 +90,14 @@ void Alert(bool);
 void printDateTime(const RtcDateTime& dt);
 
 void setup() {
+	// SP = RAMEND; // 初始化栈指针
 	Serial.begin(9600);
 	Rtc.Begin();
 
 	pinMode(PIN_SOUNDER, OUTPUT);
 	for (int i = 0; i < n_led; i++) {
 		pinMode(led[i], OUTPUT);
-        // digitalWrite(led[i], LOW);
+        digitalWrite(led[i], LOW);
 	}
 
 	Queue_SendData = xQueueCreate(10, sizeof(DataToServer));
@@ -131,7 +132,7 @@ void setup() {
 	// xTaskCreate(TaskLEDData, "LEDData", 72, NULL, 1, &Task_LEDStatusData);
 	// xTaskCreate(TaskACData, "ACData", 72, NULL, 1, &Task_ACStatusData);
 	xTaskCreate(TaskSendData, "SendData", 96, NULL, 2, &Task_SendData);
-	// xTaskCreate(TaskGetData, "GetData", 96, NULL, 2, &Task_GetData);
+	xTaskCreate(TaskGetData, "GetData", 96, NULL, 2, &Task_GetData);
 
 	vTaskStartScheduler();
 }
@@ -180,15 +181,9 @@ int GetLEDWorkMode(int id) {
 void SetLEDWorkMode(int id, int value) {
 	xSemaphoreTake(Mutex_LEDWorkMode, portMAX_DELAY);
 
-	switch (value) {
-		case 0:
-			EEPROM.write(ADDR_LED_WORKMODE + id, byte(value));
-			digitalWrite(led[id], value);
-			break;
-		case 1:
-			EEPROM.write(ADDR_LED_WORKMODE + id, byte(value));
-			digitalWrite(led[id], value);
-			break;
+	if(0<=value && value<=1){
+		EEPROM.write(ADDR_LED_WORKMODE + id, byte(value));
+		digitalWrite(led[id], value);
 	}
 
 	xSemaphoreGive(Mutex_LEDWorkMode);
