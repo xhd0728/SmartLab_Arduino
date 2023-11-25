@@ -12,7 +12,7 @@
 #include <RtcDS1302.h>
 
 #define V_TASK_DELAY
-#define ADDR_LIGHT_THRESHOLD		6	//114514
+#define ADDR_LIGHT_THRESHOLD		6	//114514test
 #define ADDR_TEMPERATURE_THRESHOLD	8	
 #define ADDR_LED_WORKMODE			15
 #define PIN_SOUNDER					3
