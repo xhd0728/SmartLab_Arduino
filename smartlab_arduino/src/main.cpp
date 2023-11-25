@@ -230,7 +230,7 @@ bool alert[] = {false, false};
 void TaskLightIntensityData(void *pvParameters) {
 	for (;;) {
 		float LightData = analogRead(PIN_LDR), LightThreshold = GetLightThreshold();
-		LightData = (LightData - 320) /3;
+		LightData = (LightData - 250) /5;
 		if(LightData >= LightThreshold){
 			alert[0] = true;
 			Alert(true);
@@ -281,16 +281,16 @@ void TaskLEDData(void *pvParameters){
 }
 
 void TaskACData(void *pvParameters){
-// 	for(;;) {
-// 		xSemaphoreTake(Mutex_Status, portMAX_DELAY);
-// 		DataToServer ACData = (DataToServer){ACStatus, status[3], 0.0, 0.0};
-// 		xSemaphoreGive(Mutex_Status);
+	for(;;) {
+		xSemaphoreTake(Mutex_Status, portMAX_DELAY);
+		DataToServer ACData = (DataToServer){ACStatus, status[3], 0.0, 0.0};
+		xSemaphoreGive(Mutex_Status);
 
-// 		xQueueSend(Queue_SendData, &ACData, portMAX_DELAY);
-// #ifdef V_TASK_DELAY
-// 		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
-// #endif
-// 	}
+		xQueueSend(Queue_SendData, &ACData, portMAX_DELAY);
+#ifdef V_TASK_DELAY
+		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
+#endif
+	}
 }
 
 
