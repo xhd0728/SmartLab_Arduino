@@ -1,4 +1,5 @@
 发送3种消息
+
 $1,Light,LightThreshold$
 
 ​	表示当前光强度和光强度阈值
@@ -6,6 +7,7 @@ $1,Light,LightThreshold$
 $2,Temperature,TemperatureThreshold$
 
 ​	表示当前温度和温度阈值
+
 $3,state_0,state_1$
 
 ​	$state_0 \&1$表示LED1，$state_0>>1\&1$表示LED2，$state_1\&1$表示LED3，$state_1>>1\&1$表示LED4
