@@ -16,8 +16,8 @@
 #define ADDR_TEMPERATURE_THRESHOLD	8	
 #define ADDR_LED_WORKMODE			15
 #define PIN_SOUNDER					3
+#define PIN_MOTOR					11
 #define PIN_LDR						PIN_A1
-#define PIN_SMOKE					PIN_A2
 #define PIN_LM35					PIN_A4
 
 int n_led = 4;
@@ -36,6 +36,7 @@ SemaphoreHandle_t Mutex_ACWorkMode;
 SemaphoreHandle_t Mutex_Alert;
 SemaphoreHandle_t Mutex_Serial;
 SemaphoreHandle_t Mutex_Status;
+SemaphoreHandle_t Mutex_Motor;
 
 TaskHandle_t Task_LightIntensityData;
 TaskHandle_t Task_TemperatureData;
@@ -82,6 +83,7 @@ void SetTemperatureThreshold(int value);
 int GetTemperatureThreshold();
 void SetTemperatureThreshold(int value);
 int GetLEDWorkMode(int id);
+void SetMotorWorkMode(int value);
 void SetLEDWorkMode(int id, int value); 
 int GetACWorkMode();
 void SetACWorkMode(int value);
@@ -94,6 +96,7 @@ void setup() {
 	Rtc.Begin();
 
 	pinMode(PIN_SOUNDER, OUTPUT);
+	pinMode(PIN_MOTOR, OUTPUT);
 	for (int i = 0; i < n_led; i++) {
 		pinMode(led[i], OUTPUT);
 		digitalWrite(led[i], LOW);
@@ -114,6 +117,7 @@ void setup() {
 	Mutex_Alert = xSemaphoreCreateMutex();
 	Mutex_Serial = xSemaphoreCreateMutex();
 	Mutex_Status = xSemaphoreCreateMutex();
+	Mutex_Motor = xSemaphoreCreateMutex();
 
 	xSemaphoreGive(Mutex_CurrentLightThreshold);
 	xSemaphoreGive(Mutex_CurrentTemperatureThreshold);
@@ -122,6 +126,7 @@ void setup() {
 	xSemaphoreGive(Mutex_Alert);
 	xSemaphoreGive(Mutex_Serial);
 	xSemaphoreGive(Mutex_Status);
+	xSemaphoreGive(Mutex_Motor);
 
 	for (int i = 0; i < n_led; i++) {
 		status[i] = GetLEDWorkMode(i);
@@ -129,6 +134,7 @@ void setup() {
 			digitalWrite(led[i], status[i]);
 		}
 	}
+	digitalWrite(PIN_MOTOR, status[n_led-1]);
 
 	// while(Serial.available())
 	// 	Serial.read();
@@ -190,7 +196,19 @@ int GetLEDWorkMode(int id) {
 	return value;
 }
 
+void SetMotorWorkMode(int value){
+	xSemaphoreTake(Mutex_Motor, portMAX_DELAY);
+	if(value==1)
+		digitalWrite(PIN_MOTOR, HIGH);
+	else if(value==0)
+		digitalWrite(PIN_MOTOR, LOW);
+	xSemaphoreGive(Mutex_Motor);
+}
+
 void SetLEDWorkMode(int id, int value) {
+	if(id==3)
+		SetMotorWorkMode(value);
+
 	xSemaphoreTake(Mutex_LEDWorkMode, portMAX_DELAY);
 
 	if(0<=value && value<=1){
@@ -241,8 +259,8 @@ bool alert[] = {false, false};
 // 光强 A1
 void TaskLightIntensityData(void *pvParameters) {
 	for (;;) {
-		float LightData = analogRead(PIN_LDR), LightThreshold = GetLightThreshold();
-		LightData = (LightData - 250) /5;
+		float x = analogRead(PIN_LDR), LightThreshold = GetLightThreshold();
+		float LightData = (8.99250398e-04)*x*x - (4.98110488e-01)*x + (8.52404079e+01) + 0.5;
 		if(LightData >= LightThreshold){
 			alert[0] = true;
 			Alert(true);
@@ -313,12 +331,12 @@ void TaskSendData(void *pvParameters) {
 		if (xQueueReceive(Queue_SendData, &dataToServer, portMAX_DELAY) == pdPASS) {
 			xSemaphoreTake(Mutex_Serial, portMAX_DELAY);
 			Serial.print(dataToServer.type);
-			Serial.print("\t");
+			Serial.print(",");
 			Serial.print(dataToServer.value1);
-			Serial.print("\t");
+			Serial.print(",");
 			Serial.print(dataToServer.value2);
-			Serial.print("\t");
-			printDateTime(Rtc.GetDateTime());
+			// Serial.print(",");
+			// printDateTime(Rtc.GetDateTime());
 			Serial.println();
 			xSemaphoreGive(Mutex_Serial);
 		}
@@ -340,7 +358,7 @@ void TaskGetData(void *pvParameters) {
 			strRead += char(Serial.read());
 			vTaskDelay(20 / portTICK_PERIOD_MS);
 		}
-		sscanf(strRead.c_str(), "%d%d%d", (int *)&dataFromServer.type, &dataFromServer.id, &dataFromServer.value);
+		sscanf(strRead.c_str(), "%d,%d,%d", (int *)&dataFromServer.type, &dataFromServer.id, &dataFromServer.value);
 		// assert(dataFromServer.type != LightThreshold);
 
 		switch (dataFromServer.type) {
