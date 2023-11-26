@@ -10,7 +10,7 @@ $2,Temperature,TemperatureThreshold$
 
 $3,state_0,state_1$
 
-​	$state_0 \&1$表示LED1，$state_0>>1\&1$表示LED2，$state_1\&1$表示LED3，$state_1>>1\&1$表示LED4
+​	$state_0\&1$表示LED1，$state_0>>1\&1$表示LED2，$state_1\&1$表示LED3，$state_1>>1\&1$表示LED4
 
 
 
