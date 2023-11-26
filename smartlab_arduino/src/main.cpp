@@ -12,13 +12,14 @@
 #include <RtcDS1302.h>
 
 #define V_TASK_DELAY
-#define ADDR_LIGHT_THRESHOLD		6
-#define ADDR_TEMPERATURE_THRESHOLD	8	
-#define ADDR_LED_WORKMODE			15
-#define PIN_SOUNDER					3
-#define PIN_MOTOR					11
-#define PIN_LDR						PIN_A1
-#define PIN_LM35					PIN_A4
+#define ADDR_LIGHT_THRESHOLD 6
+#define ADDR_TEMPERATURE_THRESHOLD 8
+#define ADDR_LED_WORKMODE 15
+#define PIN_SOUNDER 3
+#define PIN_MOTOR 11
+#define PIN_LDR PIN_A1
+#define PIN_LM35 PIN_A4
+#define DELAY_TIME 100
 
 int n_led = 4;
 int led[] = {5, 10, 6, 12};
@@ -45,7 +46,8 @@ TaskHandle_t Task_ACStatusData;
 TaskHandle_t Task_SendData;
 TaskHandle_t Task_GetData;
 
-enum DataToServerTaskType {
+enum DataToServerTaskType
+{
 	Nothing_DataToServerTaskType,
 	LightIntensity,
 	Temprature,
@@ -53,7 +55,8 @@ enum DataToServerTaskType {
 	ACStatus,
 };
 
-enum DataFromServerTaskType {
+enum DataFromServerTaskType
+{
 	Nothing_DataFromServerTaskType,
 	LightThreshold,
 	TemperatureThreshold,
@@ -61,12 +64,14 @@ enum DataFromServerTaskType {
 	ACWorkMode,
 };
 
-struct DataToServer {
+struct DataToServer
+{
 	DataToServerTaskType type;
 	int value1, value2;
 };
 
-struct DataFromServer {
+struct DataFromServer
+{
 	DataFromServerTaskType type;
 	int id, value;
 };
@@ -84,26 +89,28 @@ int GetTemperatureThreshold();
 void SetTemperatureThreshold(int value);
 int GetLEDWorkMode(int id);
 void SetMotorWorkMode(int value);
-void SetLEDWorkMode(int id, int value); 
+void SetLEDWorkMode(int id, int value);
 int GetACWorkMode();
 void SetACWorkMode(int value);
 void Alert(bool);
-void printDateTime(const RtcDateTime& dt);
+void printDateTime(const RtcDateTime &dt);
 
-void setup() {
+void setup()
+{
 	// SP = RAMEND; // 初始化栈指针
 	Serial.begin(9600);
 	Rtc.Begin();
 
 	pinMode(PIN_SOUNDER, OUTPUT);
 	pinMode(PIN_MOTOR, OUTPUT);
-	for (int i = 0; i < n_led; i++) {
+	for (int i = 0; i < n_led; i++)
+	{
 		pinMode(led[i], OUTPUT);
 		digitalWrite(led[i], LOW);
 	}
 
 	Queue_SendData = xQueueCreate(3, sizeof(DataToServer));
-	
+
 	// assert(Queue_SendData != NULL);
 	// DataToServer dataToServer;
 	// assert(0);
@@ -128,18 +135,20 @@ void setup() {
 	xSemaphoreGive(Mutex_Status);
 	xSemaphoreGive(Mutex_Motor);
 
-	for (int i = 0; i < n_led; i++) {
+	for (int i = 0; i < n_led; i++)
+	{
 		status[i] = GetLEDWorkMode(i);
-		if (status[i] <= 1) {
+		if (status[i] <= 1)
+		{
 			digitalWrite(led[i], status[i]);
 		}
 	}
-	digitalWrite(PIN_MOTOR, status[n_led-1]);
+	digitalWrite(PIN_MOTOR, status[n_led - 1]);
 
 	// while(Serial.available())
 	// 	Serial.read();
 
-	xTaskCreate(TaskLightIntensityData, "LightIntensityData", 72, NULL, 1, &Task_LightIntensityData);	
+	xTaskCreate(TaskLightIntensityData, "LightIntensityData", 72, NULL, 1, &Task_LightIntensityData);
 	xTaskCreate(TaskTemperatureData, "TemperatureData", 72, NULL, 1, &Task_TemperatureData);
 	xTaskCreate(TaskLEDData, "LEDData", 72, NULL, 1, &Task_LEDStatusData);
 	// xTaskCreate(TaskACData, "ACData", 72, NULL, 2, &Task_ACStatusData);
@@ -149,15 +158,16 @@ void setup() {
 	vTaskStartScheduler();
 }
 
-void loop() {
+void loop()
+{
 	// digitalWrite(led[0], LOW);
 	// delay(1500);
 	// digitalWrite(led[0], HIGH);
 	// delay(1500);
-	
 }
 
-int GetLightThreshold() {
+int GetLightThreshold()
+{
 	xSemaphoreTake(Mutex_CurrentLightThreshold, portMAX_DELAY);
 	int data1 = (int)EEPROM.read(ADDR_LIGHT_THRESHOLD);
 	int data2 = (int)EEPROM.read(ADDR_LIGHT_THRESHOLD + 1);
@@ -166,14 +176,16 @@ int GetLightThreshold() {
 	return data;
 }
 
-void SetLightThreshold(int value) {
+void SetLightThreshold(int value)
+{
 	xSemaphoreTake(Mutex_CurrentLightThreshold, portMAX_DELAY);
 	EEPROM.write(ADDR_LIGHT_THRESHOLD, byte(value >> 8));
 	EEPROM.write(ADDR_LIGHT_THRESHOLD + 1, byte(value & ((1 << 8) - 1)));
 	xSemaphoreGive(Mutex_CurrentLightThreshold);
 }
 
-int GetTemperatureThreshold() {
+int GetTemperatureThreshold()
+{
 	xSemaphoreTake(Mutex_CurrentTemperatureThreshold, portMAX_DELAY);
 	int data1 = (int)EEPROM.read(ADDR_TEMPERATURE_THRESHOLD);
 	int data2 = (int)EEPROM.read(ADDR_TEMPERATURE_THRESHOLD + 1);
@@ -182,130 +194,154 @@ int GetTemperatureThreshold() {
 	return data;
 }
 
-void SetTemperatureThreshold(int value) {
+void SetTemperatureThreshold(int value)
+{
 	xSemaphoreTake(Mutex_CurrentTemperatureThreshold, portMAX_DELAY);
 	EEPROM.write(ADDR_TEMPERATURE_THRESHOLD, byte(value >> 8));
 	EEPROM.write(ADDR_TEMPERATURE_THRESHOLD + 1, byte(value & ((1 << 8) - 1)));
 	xSemaphoreGive(Mutex_CurrentTemperatureThreshold);
 }
 
-int GetLEDWorkMode(int id) {
+int GetLEDWorkMode(int id)
+{
 	xSemaphoreTake(Mutex_LEDWorkMode, portMAX_DELAY);
 	int value = EEPROM.read(ADDR_LED_WORKMODE + id);
 	xSemaphoreGive(Mutex_LEDWorkMode);
 	return value;
 }
 
-void SetMotorWorkMode(int value){
+void SetMotorWorkMode(int value)
+{
 	xSemaphoreTake(Mutex_Motor, portMAX_DELAY);
-	if(value==1)
+	if (value == 1)
 		digitalWrite(PIN_MOTOR, HIGH);
-	else if(value==0)
+	else if (value == 0)
 		digitalWrite(PIN_MOTOR, LOW);
 	xSemaphoreGive(Mutex_Motor);
 }
 
-void SetLEDWorkMode(int id, int value) {
-	if(id==3)
+void SetLEDWorkMode(int id, int value)
+{
+	if (id == 3)
 		SetMotorWorkMode(value);
 
 	xSemaphoreTake(Mutex_LEDWorkMode, portMAX_DELAY);
 
-	if(0<=value && value<=1){
+	if (0 <= value && value <= 1)
+	{
 		EEPROM.write(ADDR_LED_WORKMODE + id, byte(value));
 		digitalWrite(led[id], value);
 	}
 
 	xSemaphoreGive(Mutex_LEDWorkMode);
 
-    xSemaphoreTake(Mutex_Status, portMAX_DELAY);
-    status[id] = value;
-    xSemaphoreGive(Mutex_Status);
+	xSemaphoreTake(Mutex_Status, portMAX_DELAY);
+	status[id] = value;
+	xSemaphoreGive(Mutex_Status);
 }
 
-int GetACWorkMode(){
+int GetACWorkMode()
+{
 	return GetLEDWorkMode(3);
 }
 
-void SetACWorkMode(int value){
+void SetACWorkMode(int value)
+{
 	SetLEDWorkMode(3, value);
 }
 
-void Alert(bool isOn) {
+void Alert(bool isOn)
+{
 	xSemaphoreTake(Mutex_Alert, portMAX_DELAY);
-	if (isOn) {
+	if (isOn)
+	{
 		analogWrite(PIN_SOUNDER, 127);
-	} else {
+	}
+	else
+	{
 		analogWrite(PIN_SOUNDER, 0);
 	}
 	xSemaphoreGive(Mutex_Alert);
 }
 
-void printDateTime(const RtcDateTime& dt) {
+void printDateTime(const RtcDateTime &dt)
+{
 	char datestring[20];
-	snprintf_P(datestring, 
-			countof(datestring),
-			PSTR("%04u/%02u/%02u %02u:%02u:%02u"),
-			dt.Year(),
-			dt.Month(),
-			dt.Day(),
-			dt.Hour(),
-			dt.Minute(),
-			dt.Second() );
+	snprintf_P(datestring,
+			   countof(datestring),
+			   PSTR("%04u/%02u/%02u %02u:%02u:%02u"),
+			   dt.Year(),
+			   dt.Month(),
+			   dt.Day(),
+			   dt.Hour(),
+			   dt.Minute(),
+			   dt.Second());
 	Serial.print(datestring);
 }
 
 bool alert[] = {false, false};
 // 光强 A1
-void TaskLightIntensityData(void *pvParameters) {
-	for (;;) {
+void TaskLightIntensityData(void *pvParameters)
+{
+	for (;;)
+	{
 		float x = analogRead(PIN_LDR), LightThreshold = GetLightThreshold();
-		float LightData = (8.99250398e-04)*x*x - (4.98110488e-01)*x + (8.52404079e+01) + 0.5;
-		if(LightData >= LightThreshold){
+		float LightData = (8.99250398e-04) * x * x - (4.98110488e-01) * x + (8.52404079e+01) + 0.5;
+		if (LightData >= LightThreshold)
+		{
 			alert[0] = true;
 			Alert(true);
-		}else{
+		}
+		else
+		{
 			alert[0] = false;
-			if(!alert[0] && !alert[1])
+			if (!alert[0] && !alert[1])
 				Alert(false);
 		}
 		DataToServer LightIntensityData = (DataToServer){LightIntensity, (int)LightData, (int)LightThreshold};
 		xQueueSend(Queue_SendData, &LightIntensityData, portMAX_DELAY);
 #ifdef V_TASK_DELAY
-		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
+		vTaskDelay(DELAY_TIME / portTICK_PERIOD_MS * 10);
 #endif
 	}
 }
 
 // Temprature 温度
-void TaskTemperatureData(void *pvParameters) {
-	for(;;) {
+void TaskTemperatureData(void *pvParameters)
+{
+	for (;;)
+	{
 		float t = analogRead(PIN_LM35) * 0.48828125, threshold = GetTemperatureThreshold();
-		if(t >= threshold){
+		if (t >= threshold)
+		{
 			alert[1] = true;
 			Alert(true);
-		}else{
+		}
+		else
+		{
 			alert[1] = false;
-			if(!alert[0] && !alert[1])
+			if (!alert[0] && !alert[1])
 				Alert(false);
 		}
 		DataToServer temperatureData = (DataToServer){Temprature, (int)t, (int)threshold};
 		xQueueSend(Queue_SendData, &temperatureData, portMAX_DELAY);
 #ifdef V_TASK_DELAY
-		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
+		vTaskDelay(DELAY_TIME / portTICK_PERIOD_MS * 10);
 #endif
 	}
 }
 
-void TaskLEDData(void *pvParameters){
-	for(;;) {
+void TaskLEDData(void *pvParameters)
+{
+	for (;;)
+	{
 		xSemaphoreTake(Mutex_Status, portMAX_DELAY);
-		DataToServer LEDData = (DataToServer){LEDStatus, status[0]|status[1]<<1, status[2]|status[3]<<1};
+		DataToServer LEDData = (DataToServer){LEDStatus, status[0] | status[1] << 1, status[2] | status[3] << 1};
 		xSemaphoreGive(Mutex_Status);
 
 		xQueueSend(Queue_SendData, &LEDData, portMAX_DELAY);
 #ifdef V_TASK_DELAY
-		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
+		vTaskDelay(DELAY_TIME / portTICK_PERIOD_MS * 10);
 #endif
 	}
 }
@@ -318,17 +354,19 @@ void TaskLEDData(void *pvParameters){
 
 // 		xQueueSend(Queue_SendData, &ACData, portMAX_DELAY);
 // #ifdef V_TASK_DELAY
-// 		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
+// 		vTaskDelay(DELAY_TIME / portTICK_PERIOD_MS * 10);
 // #endif
 // 	}
 // }
 
-
 DataToServer dataToServer;
 
-void TaskSendData(void *pvParameters) {
-	for (;;) {
-		if (xQueueReceive(Queue_SendData, &dataToServer, portMAX_DELAY) == pdPASS) {
+void TaskSendData(void *pvParameters)
+{
+	for (;;)
+	{
+		if (xQueueReceive(Queue_SendData, &dataToServer, portMAX_DELAY) == pdPASS)
+		{
 			xSemaphoreTake(Mutex_Serial, portMAX_DELAY);
 			Serial.print(dataToServer.type);
 			Serial.print(",");
@@ -342,45 +380,47 @@ void TaskSendData(void *pvParameters) {
 		}
 
 #ifdef V_TASK_DELAY
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
+		vTaskDelay(DELAY_TIME / portTICK_PERIOD_MS);
 #endif
-
 	}
 }
 
 String strRead;
 DataFromServer dataFromServer;
 
-void TaskGetData(void *pvParameters) {
-	for (;;) {
+void TaskGetData(void *pvParameters)
+{
+	for (;;)
+	{
 		strRead = "";
-		while (Serial.available() > 0){
+		while (Serial.available() > 0)
+		{
 			strRead += char(Serial.read());
 			vTaskDelay(20 / portTICK_PERIOD_MS);
 		}
 		sscanf(strRead.c_str(), "%d,%d,%d", (int *)&dataFromServer.type, &dataFromServer.id, &dataFromServer.value);
 		// assert(dataFromServer.type != LightThreshold);
 
-		switch (dataFromServer.type) {
-			case Nothing_DataFromServerTaskType:
-				break;
-			case LightThreshold:
-				SetLightThreshold(dataFromServer.value);
-				break;
-			case TemperatureThreshold:
-				SetTemperatureThreshold(dataFromServer.value);
-				break;
-			case LEDWorkMode:
-				SetLEDWorkMode(dataFromServer.id, dataFromServer.value);
-				break;
-			case ACWorkMode:
-				SetLEDWorkMode(3, dataFromServer.value);
-				break;
-        }
+		switch (dataFromServer.type)
+		{
+		case Nothing_DataFromServerTaskType:
+			break;
+		case LightThreshold:
+			SetLightThreshold(dataFromServer.value);
+			break;
+		case TemperatureThreshold:
+			SetTemperatureThreshold(dataFromServer.value);
+			break;
+		case LEDWorkMode:
+			SetLEDWorkMode(dataFromServer.id, dataFromServer.value);
+			break;
+		case ACWorkMode:
+			SetLEDWorkMode(3, dataFromServer.value);
+			break;
+		}
 
 #ifdef V_TASK_DELAY
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
+		vTaskDelay(DELAY_TIME / portTICK_PERIOD_MS);
 #endif
-
 	}
 }

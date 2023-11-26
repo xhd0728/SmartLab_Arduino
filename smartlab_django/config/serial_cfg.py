@@ -1,3 +1,3 @@
-PORTX = "COM1"
+PORTX = "COM2"
 BPS = 9600
 TIMEX = None

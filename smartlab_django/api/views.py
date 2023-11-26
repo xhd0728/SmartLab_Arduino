@@ -1,4 +1,5 @@
 import random
+import time
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -81,17 +82,27 @@ class OptionSetView(APIView):
         :return: Response
         """
         ac_status = int(request.data.get('ac_status')) or 0
+        time.sleep(1)
         led1_status = int(request.data.get('led1_status')) or 0
+        time.sleep(1)
         led2_status = int(request.data.get('led2_status')) or 0
+        time.sleep(1)
         led3_status = int(request.data.get('led3_status')) or 0
 
         light_intensity = led_num2light_intensity(led1_status, led2_status, led3_status) + random.uniform(-0.5, 0.5)
         temperature = ac_num2temperature(ac_status) + random.uniform(-0.5, 0.5)
 
         ser = serial.Serial(PORTX, BPS, timeout=TIMEX)
-        send_str = f"{ac_status},{led1_status},{led2_status},{led3_status},{light_intensity},{temperature}\r\n"
+
+        # send_str = f"{ac_status},{led1_status},{led2_status},{led3_status},{light_intensity},{temperature}\r\n"
         try:
-            ser.write(send_str.encode("utf-8"))
+            ser.write(f"3,0,{led1_status}".encode("utf-8"))
+            time.sleep(0.3)
+            ser.write(f"3,1,{led2_status}".encode("utf-8"))
+            time.sleep(0.3)
+            ser.write(f"3,2,{led3_status}".encode("utf-8"))
+            time.sleep(0.3)
+            ser.write(f"3,3,{ac_status}".encode("utf-8"))
         except Exception as e:
             print(e)
             return Response({"status": "error", "msg": "与Arduino通信失败"})
