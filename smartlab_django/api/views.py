@@ -11,48 +11,7 @@ from pkg.data_process import led_num2light_intensity, ac_num2temperature
 from .models import DataLog
 from .serializers import DataLogSerializer
 
-
-class DeviceInfoView(APIView):
-    """
-    获取设备状态
-    """
-
-    def get(self, request):
-        """
-        从COM2读取设备装填
-        :param request: 请求体
-        :return: Response
-        """
-        ser = serial.Serial(portx=PORTX, bps=BPS, timeout=TIMEX)
-        opt_data = ser.read(ser.in_waiting).decode("utf-8")
-        opt_ls = opt_data.split(",")
-        tpl_ls = [
-            'ac_status',
-            'led_1_status',
-            'led_2_status',
-            'led_3_status',
-            'temperature',
-            'humidity'
-        ]
-        if len(opt_ls) != len(tpl_ls):
-            return Response({"status": "error", "msg": "数据格式不匹配"}, status=status.HTTP_200_OK)
-
-        opt_dict = zip(tpl_ls, opt_ls)
-
-        try:
-            DataLog.objects.create(
-                temperature=opt_dict['temperature'],
-                humidity=opt_dict['humidity'],
-                led_1_status=opt_dict['led_1_status'],
-                led_2_status=opt_dict['led_2_status'],
-                led_3_status=opt_dict['led_3_status'],
-                ac_status=opt_dict['ac_status'],
-                led_num=int(opt_dict['led_1_status'] + opt_dict['led_2_status'] + opt_dict['led_3_status']),
-            )
-        except Exception as e:
-            print(e)
-            return Response({"status": "error", "msg": "数据库写入失败"}, status=status.HTTP_200_OK)
-        return Response({"status": "ok", "data": opt_dict}, status=status.HTTP_200_OK)
+ser = serial.Serial(PORTX, BPS, timeout=TIMEX)
 
 
 class DeviceHistoryView(APIView):
@@ -82,30 +41,41 @@ class OptionSetView(APIView):
         :return: Response
         """
         ac_status = int(request.data.get('ac_status')) or 0
-        time.sleep(1)
         led1_status = int(request.data.get('led1_status')) or 0
-        time.sleep(1)
         led2_status = int(request.data.get('led2_status')) or 0
-        time.sleep(1)
         led3_status = int(request.data.get('led3_status')) or 0
+        # is_update = int(request.data.get('is_update')) or 0
 
         light_intensity = led_num2light_intensity(led1_status, led2_status, led3_status) + random.uniform(-0.5, 0.5)
-        temperature = ac_num2temperature(ac_status) + random.uniform(-0.5, 0.5)
+        # temperature = ac_num2temperature(ac_status) + random.uniform(-0.5, 0.5)
+        # ser = serial.Serial(PORTX, BPS, timeout=TIMEX)
 
-        ser = serial.Serial(PORTX, BPS, timeout=TIMEX)
+        temperature = 7
+        # light_intensity = 8
+        get_temperature = False
+        get_light_intensity = False
+        while not get_temperature and not get_light_intensity:
+            opt_data = ser.read_until().decode('utf-8')
+            if opt_data:
+                print(opt_data)
+                tmp_str = opt_data.strip().split(",")
+                if tmp_str[0] == '2' and not get_temperature:
+                    temperature = int(tmp_str[1])
+                    get_temperature = True
 
-        # send_str = f"{ac_status},{led1_status},{led2_status},{led3_status},{light_intensity},{temperature}\r\n"
-        try:
-            ser.write(f"3,0,{led1_status}".encode("utf-8"))
-            time.sleep(0.3)
-            ser.write(f"3,1,{led2_status}".encode("utf-8"))
-            time.sleep(0.3)
-            ser.write(f"3,2,{led3_status}".encode("utf-8"))
-            time.sleep(0.3)
-            ser.write(f"3,3,{ac_status}".encode("utf-8"))
-        except Exception as e:
-            print(e)
-            return Response({"status": "error", "msg": "与Arduino通信失败"})
+        if True:
+            try:
+                ser.write(f"3,0,{led1_status}".encode("utf-8"))
+                time.sleep(0.4)
+                ser.write(f"3,1,{led2_status}".encode("utf-8"))
+                time.sleep(0.4)
+                ser.write(f"3,2,{led3_status}".encode("utf-8"))
+                time.sleep(0.4)
+                ser.write(f"3,3,{ac_status}".encode("utf-8"))
+            except Exception as e:
+                print(e)
+                return Response({"status": "error", "msg": "与Arduino通信失败"})
+
         try:
             DataLog.objects.create(
                 temperature=temperature,

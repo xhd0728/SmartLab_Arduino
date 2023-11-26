@@ -19,7 +19,7 @@
 #define PIN_MOTOR 11
 #define PIN_LDR PIN_A1
 #define PIN_LM35 PIN_A4
-#define DELAY_TIME 100
+#define DELAY_TIME 200
 
 int n_led = 4;
 int led[] = {5, 10, 6, 12};
@@ -375,7 +375,7 @@ void TaskSendData(void *pvParameters)
 			Serial.print(dataToServer.value2);
 			// Serial.print(",");
 			// printDateTime(Rtc.GetDateTime());
-			Serial.println();
+			Serial.print("\n");
 			xSemaphoreGive(Mutex_Serial);
 		}
 

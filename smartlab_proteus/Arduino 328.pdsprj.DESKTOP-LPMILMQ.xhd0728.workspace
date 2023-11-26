@@ -3,6 +3,7 @@
  <FRAME activewindow="0">
   <PLACEMENT>2c0000000200000003000000ffffffffffffffffffffffffffffffffb20000000c000000ce060000fa030000</PLACEMENT>
   <WINDOW type="default" module="ISIS"/>
+  <WINDOW type="default" module="DXP"/>
  </FRAME>
  <MODULE name="VSMDEBUG">
   <PWI>
@@ -97,7 +98,7 @@
      <ITEM name="TopLineAddress">00000020</ITEM>
     </PROPERTIES>
    </POPUP>
-   <POPUP w="1811" x="6" flags="0000002b" y="123" h="742" pid="1" iid="1">
+   <POPUP w="1811" x="6" flags="0000002a" y="123" h="742" pid="1" iid="1">
     <PROPERTIES>
      <ITEM name="CaseSensitive">No</ITEM>
      <ITEM name="DISPADDRS">Yes</ITEM>
@@ -108,7 +109,7 @@
      <ITEM name="nBreakpoints">0</ITEM>
     </PROPERTIES>
    </POPUP>
-   <POPUP w="1815" x="5" flags="0000000b" y="923" h="100" pid="2" iid="1">
+   <POPUP w="1815" x="5" flags="0000000a" y="923" h="100" pid="2" iid="1">
     <PROPERTIES>
      <ITEM name="Address Column Width">604</ITEM>
      <ITEM name="AutoResize">No</ITEM>
