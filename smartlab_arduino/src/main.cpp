@@ -62,7 +62,7 @@ enum DataFromServerTaskType {
 
 struct DataToServer {
 	DataToServerTaskType type;
-	float value1, value2, value3;
+	int value1, value2;
 };
 
 struct DataFromServer {
@@ -73,7 +73,7 @@ struct DataFromServer {
 void TaskLightIntensityData(void *pvParameters);
 void TaskTemperatureData(void *pvParameters);
 void TaskLEDData(void *pvParameters);
-void TaskACData(void *pvParameters);
+// void TaskACData(void *pvParameters);
 void TaskSendData(void *pvParameters);
 void TaskGetData(void *pvParameters);
 
@@ -251,7 +251,7 @@ void TaskLightIntensityData(void *pvParameters) {
 			if(!alert[0] && !alert[1])
 				Alert(false);
 		}
-		DataToServer LightIntensityData = (DataToServer){LightIntensity, LightData, LightThreshold, 0};
+		DataToServer LightIntensityData = (DataToServer){LightIntensity, (int)LightData, (int)LightThreshold};
 		xQueueSend(Queue_SendData, &LightIntensityData, portMAX_DELAY);
 #ifdef V_TASK_DELAY
 		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
@@ -271,7 +271,7 @@ void TaskTemperatureData(void *pvParameters) {
 			if(!alert[0] && !alert[1])
 				Alert(false);
 		}
-		DataToServer temperatureData = (DataToServer){Temprature, t, threshold, 0};
+		DataToServer temperatureData = (DataToServer){Temprature, (int)t, (int)threshold};
 		xQueueSend(Queue_SendData, &temperatureData, portMAX_DELAY);
 #ifdef V_TASK_DELAY
 		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
@@ -282,7 +282,7 @@ void TaskTemperatureData(void *pvParameters) {
 void TaskLEDData(void *pvParameters){
 	for(;;) {
 		xSemaphoreTake(Mutex_Status, portMAX_DELAY);
-		DataToServer LEDData = (DataToServer){LEDStatus, (float)status[0], (float)status[1], (float)status[2]};
+		DataToServer LEDData = (DataToServer){LEDStatus, status[0]|status[1]<<1, status[2]|status[3]<<1};
 		xSemaphoreGive(Mutex_Status);
 
 		xQueueSend(Queue_SendData, &LEDData, portMAX_DELAY);
@@ -292,18 +292,18 @@ void TaskLEDData(void *pvParameters){
 	}
 }
 
-void TaskACData(void *pvParameters){
-	for(;;) {
-		xSemaphoreTake(Mutex_Status, portMAX_DELAY);
-		DataToServer ACData = (DataToServer){ACStatus, (float)status[3], 0.0, 0.0};
-		xSemaphoreGive(Mutex_Status);
+// void TaskACData(void *pvParameters){
+// 	for(;;) {
+// 		xSemaphoreTake(Mutex_Status, portMAX_DELAY);
+// 		DataToServer ACData = (DataToServer){ACStatus, (float)status[3], 0.0, 0.0};
+// 		xSemaphoreGive(Mutex_Status);
 
-		xQueueSend(Queue_SendData, &ACData, portMAX_DELAY);
-#ifdef V_TASK_DELAY
-		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
-#endif
-	}
-}
+// 		xQueueSend(Queue_SendData, &ACData, portMAX_DELAY);
+// #ifdef V_TASK_DELAY
+// 		vTaskDelay(1000 / portTICK_PERIOD_MS * 10);
+// #endif
+// 	}
+// }
 
 
 DataToServer dataToServer;
@@ -317,8 +317,6 @@ void TaskSendData(void *pvParameters) {
 			Serial.print(dataToServer.value1);
 			Serial.print("\t");
 			Serial.print(dataToServer.value2);
-			Serial.print("\t");
-			Serial.print(dataToServer.value3);
 			Serial.print("\t");
 			printDateTime(Rtc.GetDateTime());
 			Serial.println();
